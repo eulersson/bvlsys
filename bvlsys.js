@@ -9,12 +9,12 @@ window.onload = function() {
 
   function calculateBifurcation(l0, d0) {
     return {
-      d1: 1,
-      d2: 1,
-      th1: 30,
-      th2: 30,
-      l1: l0*0.3,
-      l2: l0*0.8
+      d1: d0 * (0.4 + 0.6 * Math.random()),
+      d2: d0 * (0.4 + 0.6 * Math.random()),
+      th1: 30 + Math.random() * 10,
+      th2: 30 + Math.random() * 5,
+      l1: l0 * (0.5 + 0.5 * Math.random()),
+      l2: l0 * (0.5 + 0.5 * Math.random())
     }
   }
 
@@ -34,9 +34,10 @@ window.onload = function() {
   function init() {
     c = document.getElementById("canvas");
     ctx = c.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
     c.width = window.innerWidth;
     c.height = window.innerHeight;
-    depth = 2;
+    depth = 1;
 
     draw();
 
@@ -54,17 +55,21 @@ window.onload = function() {
     ctx.clearRect(0, 0, c.width, c.height);
     segments = [];
 
-    var result = rules.F(depth, 200.00, 1);
+    var result = rules.F(depth, 100.00, 7);
     interpret(result);
 
-    console.log("Segments...");
-    console.dir(segments);
-
     segments.forEach(function(segment) {
-      ctx.beginPath();
+      var whole = {x: segment.target.x - segment.origin.x, y: segment.target.y - segment.origin.y};
+      var iterations = Math.sqrt(whole.x * whole.x + whole.y * whole.y);
       ctx.moveTo(segment.origin.x, segment.origin.y);
-      ctx.lineTo(segment.target.x, segment.target.y);
-      ctx.stroke();
+      for (i = 0; i <= iterations; i++) {
+        var x = segment.origin.x + (i / iterations) * whole.x;
+        var y = segment.origin.y + (i / iterations) * whole.y;
+        ctx.beginPath();
+        ctx.arc(x, y, segment.diameter, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.closePath();
+      }
     }); 
   }
 
