@@ -59,14 +59,16 @@ window.onload = function() {
     interpret(result);
 
     segments.forEach(function(segment) {
+      console.dir(segment);
       var whole = {x: segment.target.x - segment.origin.x, y: segment.target.y - segment.origin.y};
       var iterations = Math.sqrt(whole.x * whole.x + whole.y * whole.y);
       ctx.moveTo(segment.origin.x, segment.origin.y);
       for (i = 0; i <= iterations; i++) {
         var x = segment.origin.x + (i / iterations) * whole.x;
         var y = segment.origin.y + (i / iterations) * whole.y;
+        var diameter = segment.prev_diameter * (1 - (i / iterations)) + segment.diameter * (i / iterations);
         ctx.beginPath();
-        ctx.arc(x, y, segment.diameter, 0, 2 * Math.PI);
+        ctx.arc(x, y, diameter, 0, 2 * Math.PI);
         ctx.fill();
         ctx.closePath();
       }
@@ -79,7 +81,7 @@ window.onload = function() {
     console.log("Total length of commands string: " + n);
 
     var stateMachine = [];
-    var currentState = JSON.parse(JSON.stringify({pos: startPos, dir: startDir}));
+    var currentState = JSON.parse(JSON.stringify({pos: startPos, dir: startDir, diameter: 1}));
 
     var i = 0;
 
@@ -97,12 +99,23 @@ window.onload = function() {
           var result = patt.exec(substring);
 
           var chars_read = result[0].length - 1;
-          var seg_length = result[1];
-          var seg_diameter = result[2];
+          var seg_length = parseFloat(result[1]);
+          var seg_diameter = parseFloat(result[2]);
 
           console.log("chars_read    " + chars_read);
           console.log("seg_length   " + seg_length);
           console.log("seg_diameter " + seg_diameter);
+
+          currentState.diameter = seg_diameter;
+
+          var prev_diameter;
+          if (stateMachine.length < 1) {
+            prev_diameter = 1.5 * seg_diameter;
+          } else {
+            prev_diameter = stateMachine[0].diameter;
+          }
+          console.log(`000000000--------->>>>`);
+          console.log(seg_diameter);
 
           segments.push({
             origin: {
@@ -113,7 +126,8 @@ window.onload = function() {
               x: currentState.pos.x + currentState.dir.x * seg_length,
               y: currentState.pos.y + currentState.dir.y * seg_length
             },
-            diameter: seg_diameter
+            diameter: seg_diameter,
+            prev_diameter: prev_diameter
           })
 
           currentState.pos.x += currentState.dir.x * seg_length;
