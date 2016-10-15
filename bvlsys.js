@@ -1,14 +1,15 @@
 // Runs when page loads
 window.onload = function() {
-  // Proparation of all the context variables
-  var c;
-  var ctx;
-  var depth;
-  var segments = [];
+  // Gloabl variable declaration
 
-  // Initial position to start branches from
-  var startPos = {x: window.innerWidth / 2, y: window.innerHeight / 2};
-  var startDir = {x: 0, y: 1};
+  var c,             // will hold the canvas DOM object
+      ctx,           // will carry the context of the canvas
+      depth,         // depth of recursion
+      segments,      // array containing all the segments that need to be drawn
+      startLength,   // initial length of the root segment
+      startDiameter, // initial diameter of the root segment
+      startPos,      // from where to start drawing
+      startDir;      // what direction the first segment should be aiming to
 
   // On each split, set some parameters to drive vessel look
   function calculateBifurcation(l0, d0) {
@@ -22,7 +23,7 @@ window.onload = function() {
     }
   }
 
-  // The L-System ruleset
+  // The L-System rulesets
   var rules = {
     F: function(n, l0, d0) {
       if (n > 0) {
@@ -90,6 +91,11 @@ window.onload = function() {
     c.width = window.innerWidth;
     c.height = window.innerHeight;
 
+    startLength = 200.0;
+    startDiameter = 7.0;
+    startPos = {x: window.innerWidth / 2, y: window.innerHeight / 2};
+    startDir = {x: 0, y: 1};
+
     depth = 1;
     draw();
 
@@ -113,10 +119,12 @@ window.onload = function() {
 
     // Generate the commands string
     //var result = rules.F(depth, 100.00, 7);
-    var result = blood.R(depth, 100.0, 5.0);
+    var result = blood.R(depth, startLength, startDiameter);
 
     // Generate the segments out of the commands
     interpret(result);
+
+    console.dir(segments);
 
     // Iterate over segments and draw them
     segments.forEach(function(segment) {
@@ -169,7 +177,7 @@ window.onload = function() {
     // States will be pushed to the front of this array
     stateMachine = [];
     currentState = JSON.parse(JSON.stringify(
-        {pos: startPos, dir: startDir}
+        {pos: startPos, dir: startDir, diameter: startDiameter, previous_diameter: startDiameter}
     ));
 
     var i = 0;
@@ -233,7 +241,7 @@ window.onload = function() {
 
     var previous_diameter;
     if (stateMachine.length < 1) {
-      previous_diameter = 1.5 * segment_diameter; // root branch
+      previous_diameter = segment_diameter; // root branch
     } else {
       previous_diameter = stateMachine[0].diameter;
     }
