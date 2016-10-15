@@ -7,7 +7,7 @@ window.onload = function() {
   var segments = [];
 
   // Initial position to start branches from
-  var startPos = {x: window.innerWidth / 2, y: 0};
+  var startPos = {x: window.innerWidth / 2, y: window.innerHeight / 2};
   var startDir = {x: 0, y: 1};
 
   // On each split, set some parameters to drive vessel look
@@ -35,6 +35,49 @@ window.onload = function() {
       }
     }
   };
+
+  var blood = {
+    R: function(n, l0, d0) {
+      if (n > 0) {
+        var parms = calculateBifurcation(l0, d0);
+        return `[-(70.00)` + this.F(n-1,l0,d0) + `][+(160.00)` + this.F(n-1,l0,d0) +
+          `]+(70)` + this.F(n-1,l0,d0);
+      } else {
+        return `f(${l0/5},${d0})`;
+      }
+    },
+    F: function(n, l0, d0) {
+      if (n > 0) {
+        var parms = calculateBifurcation(l0, d0);
+        return this.S(n-1,l0,d0) + `[+(${parms.th1})+(70.00)` + this.F(n-1,l0,parms.d1) +
+          `][-(${parms.th2})+(70.00)` + this.F(n-1,l0,parms.d2) + `]`;
+      } else {
+        return `f(${l0/5},${d0})`;
+      }
+    },
+    S: function(n, l0, d0) {
+      if (n > 0) {
+        var choice = Math.floor(2 * Math.random());
+        switch (choice) {
+          case 0:
+            return this.D(n-1,l0,d0) + `+(25.00)` + this.D(n-1,l0,d0) + `-(25.00)`
+              + this.D(n-1,l0,d0) + `-(25.00)` + this.D(n-1,l0,d0) + `+(25.00)`
+              + this.D(n-1,l0,d0);
+            break;
+          case 1:
+            return this.D(n-1,l0,d0) + `-(25.00)` + this.D(n-1,l0,d0) + `+(25.00)`
+              + this.D(n-1,l0,d0) + `+(25.00)` + this.D(n-1,l0,d0) + `-(25.00)`
+              + this.D(n-1,l0,d0);
+            break;
+        }
+      } else {
+        return `f(${l0/5},${d0})`;
+      }
+    },
+    D: function(n, l0, d0) {
+      return `f(${l0/5},${d0})`;
+    }
+  }
 
   init();
 
@@ -69,7 +112,8 @@ window.onload = function() {
     ctx.clearRect(0, 0, c.width, c.height);
 
     // Generate the commands string
-    var result = rules.F(depth, 100.00, 7);
+    //var result = rules.F(depth, 100.00, 7);
+    var result = blood.R(depth, 100.0, 7.0);
 
     // Generate the segments out of the commands
     interpret(result);
