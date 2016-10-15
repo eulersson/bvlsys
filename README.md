@@ -7,6 +7,6 @@ Stochastic parametrized L-Systems for blood vessels generation
 
 ![Gargot 2](/wip/gargot2.png?raw=true "Gargot 2")
 
-![Network](/wip/network.png?raw=true "Network")
+![Net](/wip/net.png?raw=true "Net")
 
 ![Tree](/wip/tree.png?raw=true "Tree")
