@@ -113,7 +113,7 @@ window.onload = function() {
 
     // Generate the commands string
     //var result = rules.F(depth, 100.00, 7);
-    var result = blood.R(depth, 100.0, 7.0);
+    var result = blood.R(depth, 100.0, 5.0);
 
     // Generate the segments out of the commands
     interpret(result);
