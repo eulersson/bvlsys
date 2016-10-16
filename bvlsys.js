@@ -4,12 +4,14 @@ window.onload = function() {
 
   var c,             // will hold the canvas DOM object
       ctx,           // will carry the context of the canvas
+      currentState,  // the actual state containing pos, dir, diameter
       depth,         // depth of recursion
       segments,      // array containing all the segments that need to be drawn
       startLength,   // initial length of the root segment
       startDiameter, // initial diameter of the root segment
       startPos,      // from where to start drawing
-      startDir;      // what direction the first segment should be aiming to
+      startDir,      // what direction the first segment should be aiming to
+      stateStack;    // all the states will be appended at the begining
 
   // On each split, set some parameters to drive vessel look
   function calculateBifurcation(l0, d0) {
@@ -50,7 +52,7 @@ window.onload = function() {
     F: function(n, l0, d0) {
       if (n > 0) {
         var parms = calculateBifurcation(l0, d0);
-        return this.S(n-1,l0,d0) + `[+(${parms.th1})+(70.00)` + this.F(n-1,l0,parms.d1) +
+        return `{` + this.S(n-1,l0,d0) + `}[+(${parms.th1})+(70.00)` + this.F(n-1,l0,parms.d1) +
           `][-(${parms.th2})+(70.00)` + this.F(n-1,l0,parms.d2) + `]`;
       } else {
         return `f(${l0/5},${d0})`;
@@ -160,8 +162,6 @@ window.onload = function() {
     }); 
   }
 
-  var currentState;
-  var stateMachine;
   // Run the rules. Right now there is no axiom, you cannot run it against yet
   function interpret(commands) {
 
@@ -175,12 +175,15 @@ window.onload = function() {
     console.log("Total length of commands string: " + n);
 
     // States will be pushed to the front of this array
-    stateMachine = [];
+    stateStack = [];
     currentState = JSON.parse(JSON.stringify(
-        {pos: startPos, dir: startDir, diameter: startDiameter, previous_diameter: startDiameter}
+        {pos: startPos, dir: startDir, diameter: startDiameter}
     ));
 
     var i = 0;
+    var isFirstDrawn = false;
+    var isSegmentPart = true;
+    var isLastSegmentPart = false;
     while (i < n) {
       var currentChar = commands.charAt(i);
       console.log("----");
@@ -192,19 +195,36 @@ window.onload = function() {
         // regex. The returned value is used to walk passed the already parsed
         // characters.
         case 'f':
-          i += perform_step(commands.slice(i, n));
+          i += perform_step(commands.slice(i, n), isFirstDrawn, isSegmentPart, isLastSegmentPart);
+          isFirstDrawn = true;
+          break;
+
+        // Defines segment start... Diameter accross the segment will keep the
+        // same after the first which will connect to the direct ancestor
+        case '{':
+          isFirstDrawn = false;
+          isSegmentPart = true;
+          isLastSegmentPart = false;
+          break;
+
+        // Segment is finished
+        case '}':
+          isSegmentPart = false;
+          isFirstDrawn = true;
+          isLastSegmentPart = true;
+          console.log("Finish segment");
           break;
 
         // Push a state to the start of the stack
         case '[':
-          stateMachine.unshift(JSON.parse(JSON.stringify(currentState)));
-          console.log(`Pushed state. Now ${stateMachine.length} states.`);
+          stateStack.unshift(JSON.parse(JSON.stringify(currentState)));
+          console.log(`Pushed state. Now ${stateStack.length} states.`);
           break;
 
         // Pop a state from the start of the stack
         case ']':
-          currentState = JSON.parse(JSON.stringify(stateMachine.shift()));
-          console.log(`Popped state. Now ${stateMachine.length} states.`);
+          currentState = JSON.parse(JSON.stringify(stateStack.shift()));
+          console.log(`Popped state. Now ${stateStack.length} states.`);
           break;
 
         // Clockwise rotation. The returned value makes the iterator skip the
@@ -224,7 +244,7 @@ window.onload = function() {
   }
 
   // Makes turtle walk
-  function perform_step(substring) {
+  function perform_step(substring, isFirstDrawn, isSegmentPart, isLastSegmentPart) {
     var pattern = /f\((\d+\.*\d*),(\d+\.*\d*)\)/;
     var result = pattern.exec(substring);
 
@@ -232,19 +252,28 @@ window.onload = function() {
     var segment_length   = parseFloat(result[1]);
     var segment_diameter = parseFloat(result[2]);
 
-    console.log("Characters Read: " + characters_read);
-    console.log("Parsed length:   " + segment_length);
-    console.log("Parsed diameter: " + segment_diameter);
+    console.log(`Characters Read:      ${characters_read}`  );
+    console.log(`Parsed Length:        ${segment_length}`   );
+    console.log(`Parsed Diameter:      ${segment_diameter}` );
+    console.log(`Is first drawn:       ${isFirstDrawn}`     );
+    console.log(`Is part of segment:   ${isSegmentPart}`    );
+    console.log(`Is last segment step: ${isLastSegmentPart}`)
 
     // Needs to be done so that we can access parent branch diameters
     currentState.diameter = segment_diameter;
 
-    var previous_diameter;
-    if (stateMachine.length < 1) {
-      previous_diameter = segment_diameter; // root branch
+    if (isSegmentPart && isFirstDrawn) {
+      previous_diameter = segment_diameter;
+
     } else {
-      previous_diameter = stateMachine[0].diameter;
+      var previous_diameter;
+      if (stateStack.length < 1) {
+        previous_diameter = segment_diameter; // root branch
+      } else {
+        previous_diameter = stateStack[0].diameter;
+      }
     }
+
 
     // Pushes the segment so it can be drawn later on the draw() function
     segments.push({
