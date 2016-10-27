@@ -17,13 +17,8 @@ window.onload = function() {
   function calculateBifurcation(l0, d0) {
     var alpha = Math.random();
 
-    console.log(`alpha: ${alpha}`);
-
     var cosTheta1 = ( Math.pow(1 + Math.pow(alpha, 3), 4/3) +                  1 - Math.pow(alpha, 4) ) / ( 2 * Math.pow(1+Math.pow(alpha, 3),2/3) );
     var cosTheta2 = ( Math.pow(1 + Math.pow(alpha, 3), 4/3) + Math.pow(alpha, 4) -                  1 ) / ( 2 * Math.pow(alpha, 2) * Math.pow(1+Math.pow(alpha, 3), 2/3));
-
-    console.log(`cosTheta1: ${cosTheta1}`);
-    console.log(`cosTheta2: ${cosTheta2}`);
 
     var denom = Math.pow(1+Math.pow(alpha, 3),1/3);
     var lambda1 = 1 / denom;
@@ -34,12 +29,6 @@ window.onload = function() {
     var l2 = l0 * lambda2;
     var d1 = d0 * lambda1;
     var d2 = d0 * lambda2;
-
-    console.log(" ");
-    console.log("Calculate Bifurcation Results:");
-    console.log(`    th1: ${th1}`);
-    console.log(`    th2: ${th2}`);
-    console.log(" ");
 
     return {
       d1: d1,
@@ -52,7 +41,7 @@ window.onload = function() {
   }
 
   // The L-System rulesets
-  var rules = {
+  var tree = {
     F: function(n, l0, d0) {
       if (n > 0) {
         var params = calculateBifurcation(l0, d0);
@@ -65,7 +54,7 @@ window.onload = function() {
     }
   };
 
-  var blood = {
+  var bv1 = {
     R: function(n, l0, d0) {
       if (n > 0) {
         var parms = calculateBifurcation(l0, d0);
@@ -108,6 +97,11 @@ window.onload = function() {
     }
   }
 
+  var rulesets = {
+    'tree': tree,
+    'bv1': bv1
+  }
+
   init();
 
   // Sets up a rendering context in HTML5's canvas, draws, and increses
@@ -146,8 +140,7 @@ window.onload = function() {
     ctx.clearRect(0, 0, c.width, c.height);
 
     // Generate the commands string
-    //var result = rules.F(depth, 100.00, 7);
-    var result = blood.R(depth, startLength, startDiameter);
+    var result = rulesets.bv1.R(depth, startLength, startDiameter);
 
     // Generate the segments out of the commands
     interpret(result);
