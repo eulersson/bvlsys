@@ -15,13 +15,39 @@ window.onload = function() {
 
   // On each split, set some parameters to drive vessel look
   function calculateBifurcation(l0, d0) {
+    var alpha = Math.random();
+
+    console.log(`alpha: ${alpha}`);
+
+    var cosTheta1 = ( Math.pow(1 + Math.pow(alpha, 3), 4/3) +                  1 - Math.pow(alpha, 4) ) / ( 2 * Math.pow(1+Math.pow(alpha, 3),2/3) );
+    var cosTheta2 = ( Math.pow(1 + Math.pow(alpha, 3), 4/3) + Math.pow(alpha, 4) -                  1 ) / ( 2 * Math.pow(alpha, 2) * Math.pow(1+Math.pow(alpha, 3), 2/3));
+
+    console.log(`cosTheta1: ${cosTheta1}`);
+    console.log(`cosTheta2: ${cosTheta2}`);
+
+    var denom = Math.pow(1+Math.pow(alpha, 3),1/3);
+    var lambda1 = 1 / denom;
+    var lambda2 = alpha / denom;
+    var th1 = Math.acos(cosTheta1) * (180 / Math.PI);
+    var th2 = Math.acos(cosTheta2) * (180 / Math.PI);
+    var l1 = l0 * lambda1;
+    var l2 = l0 * lambda2;
+    var d1 = d0 * lambda1;
+    var d2 = d0 * lambda2;
+
+    console.log(" ");
+    console.log("Calculate Bifurcation Results:");
+    console.log(`    th1: ${th1}`);
+    console.log(`    th2: ${th2}`);
+    console.log(" ");
+
     return {
-      d1: d0 * (0.4 + 0.6 * Math.random()),
-      d2: d0 * (0.4 + 0.6 * Math.random()),
-      th1: 30 + Math.random() * 10,
-      th2: 30 + Math.random() * 5,
-      l1: l0 * (0.5 + 0.5 * Math.random()),
-      l2: l0 * (0.5 + 0.5 * Math.random())
+      d1: d1,
+      d2: d2,
+      th1: th1,
+      th2: th2,
+      l1: l1,
+      l2: l2
     }
   }
 
@@ -93,8 +119,8 @@ window.onload = function() {
     c.width = window.innerWidth;
     c.height = window.innerHeight;
 
-    startLength = 200.0;
-    startDiameter = 7.0;
+    startLength = 50.0;
+    startDiameter = 4.0;
     startPos = {x: window.innerWidth / 2, y: window.innerHeight / 2};
     startDir = {x: 0, y: 1};
 
