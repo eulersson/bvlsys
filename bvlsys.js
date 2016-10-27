@@ -13,6 +13,9 @@ window.onload = function() {
       startDir,      // what direction the first segment should be aiming to
       stateStack;    // all the states will be appended at the begining
 
+  var web_position_offset = {x: window.innerWidth / 2, y: window.innerHeight / 2};
+  var web_scale_multiplier = 1;
+
   var points_for_houdini = [];
   var pscale_for_houdini = [];
 
@@ -118,20 +121,26 @@ window.onload = function() {
 
     startLength = 50.0;
     startDiameter = 4.0;
-    startPos = {x: window.innerWidth / 2, y: window.innerHeight / 2};
+    startPos = {x: 0, y: 0};
     startDir = {x: 0, y: 1};
 
     depth = 1;
     draw();
 
     document.body.addEventListener("keyup", function(event) {
+      console.log(`key pressed: ${event.keyCode}`);
       switch(event.keyCode) {
-        case 32:
+        case 32: // spacebar
           depth += 1;
           draw();
           break;
-        case 83:
+        case 83: // s
           popImage();
+          break;
+        case 74: // j
+          generate_json(points_for_houdini, pscale_for_houdini);
+          break
+
       }
     });
   }
@@ -147,6 +156,8 @@ window.onload = function() {
 
   // First generates the commands string, parses it, and draws the segments
   function draw() {
+    points_for_houdini = [];
+    pscale_for_houdini = [];
 
     // Clear canvas
     ctx.clearRect(0, 0, c.width, c.height);
@@ -186,7 +197,9 @@ window.onload = function() {
 
         // Do the actual drawing
         ctx.beginPath();
-        ctx.arc(x, y, diameter, 0, 2 * Math.PI);
+        ctx.arc( web_position_offset.x + x, web_position_offset.y + y, diameter, 0, 2 * Math.PI);
+
+        console.log(`PSCALE ATTR: ${diameter}`);
 
         points_for_houdini.push([x, y, 0.0]);
         pscale_for_houdini.push(diameter);
@@ -195,12 +208,6 @@ window.onload = function() {
         ctx.closePath();
       }
     });
-
-    var json = generate_json(points_for_houdini, pscale_for_houdini);
-    console.log('---');
-    console.dir(json);
-    console.log('---');
-    //saveText(JSON.stringify(json), "filename.json");
   }
 
   function generate_json(points_for_houdini, pscale_for_houdini) {
@@ -248,15 +255,15 @@ window.onload = function() {
               "values",[
                 "size",1,
                 "storage","fpreal32",
-                "arrays",pscale_for_houdini
+                "arrays",[pscale_for_houdini]
               ]
             ]
           ]
         ]
       ]
-    ]
+    ];
 
-    return json;
+    saveText(JSON.stringify(json), 'geometry.json');
   }
 
   // Run the rules. Right now there is no axiom, you cannot run it against yet
