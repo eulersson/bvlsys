@@ -13,6 +13,9 @@ window.onload = function() {
       startDir,      // what direction the first segment should be aiming to
       stateStack;    // all the states will be appended at the begining
 
+  var points_for_houdini = [];
+  var pscale_for_houdini = [];
+
   // On each split, set some parameters to drive vessel look
   function calculateBifurcation(l0, d0) {
     var alpha = Math.random();
@@ -133,6 +136,15 @@ window.onload = function() {
     });
   }
 
+  function saveText(text, filename){
+    var a = document.createElement('a');
+    a.setAttribute('href', 'data:text/plain;charset=utf-u,'+encodeURIComponent(text));
+    a.setAttribute('download', filename);
+    a.click()
+  }
+
+
+
   // First generates the commands string, parses it, and draws the segments
   function draw() {
 
@@ -175,10 +187,76 @@ window.onload = function() {
         // Do the actual drawing
         ctx.beginPath();
         ctx.arc(x, y, diameter, 0, 2 * Math.PI);
+
+        points_for_houdini.push([x, y, 0.0]);
+        pscale_for_houdini.push(diameter);
+
         ctx.fill();
         ctx.closePath();
       }
-    }); 
+    });
+
+    var json = generate_json(points_for_houdini, pscale_for_houdini);
+    console.log('---');
+    console.dir(json);
+    console.log('---');
+    saveText(JSON.stringify(json), "filename.json");
+  }
+
+  function generate_json(points_for_houdini, pscale_for_houdini) {
+    var json = [
+      "pointcount",pscale_for_houdini.length,
+      "vertexcount",0,
+      "primitivecount",0,
+      "topology",[
+        "pointref",[
+          "indices",[]
+        ]
+      ],
+      "attributes",[
+        "pointattributes",[
+          [
+            [
+              "type","numeric",
+              "name","P",
+            ],
+            [
+              "size",3,
+              "defaults",[
+                "size",3,
+                "storage","fpreal64",
+              ],
+              "values",[
+                "size",3,
+                "storage","fpreal32",
+                "tuples",points_for_houdini
+              ]
+            ]
+          ],
+          [
+            [
+              "type","numeric",
+              "name","pscale",
+            ],
+            [
+              "size",1,
+              "storage","fpreal32",
+              "defaults",[
+                "size",1,
+                "storage","fpreal64",
+              ],
+              "values",[
+                "size",1,
+                "storage","fpreal32",
+                "arrays",pscale_for_houdini
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+
+    return json;
   }
 
   // Run the rules. Right now there is no axiom, you cannot run it against yet
