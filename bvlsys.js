@@ -200,7 +200,7 @@ window.onload = function() {
     console.log('---');
     console.dir(json);
     console.log('---');
-    saveText(JSON.stringify(json), "filename.json");
+    //saveText(JSON.stringify(json), "filename.json");
   }
 
   function generate_json(points_for_houdini, pscale_for_houdini) {
