@@ -69,7 +69,7 @@ window.onload = function() {
     R: function(n, l0, d0) {
       if (n > 0) {
         var parms = calculateBifurcation(l0, d0);
-        return `[-(70.00)` + this.F(n-1,l0,d0) + `][+(160.00)` + this.F(n-1,l0,d0) +
+        return `[-(70.00)` + this.F(n-1,l0,d0) + `][+(70.00)` + this.F(n-1,l0,d0) +
           `]+(70)` + this.F(n-1,l0,d0);
       } else {
         return `f(${l0/5},${d0})`;
@@ -78,8 +78,8 @@ window.onload = function() {
     F: function(n, l0, d0) {
       if (n > 0) {
         var parms = calculateBifurcation(l0, d0);
-        return `{` + this.S(n-1,l0,d0) + `}[+(${parms.th1})+(70.00)` + this.F(n-1,l0,parms.d1) +
-          `][-(${parms.th2})+(70.00)` + this.F(n-1,l0,parms.d2) + `]`;
+        return `{` + this.S(n-1,l0,d0) + `}[+(${parms.th1})` + this.F(n-1,l0,parms.d1) +
+          `][-(${parms.th2})` + this.F(n-1,l0,parms.d2) + `]`;
       } else {
         return `f(${l0/5},${d0})`;
       }
