@@ -87,12 +87,10 @@ window.onload = function() {
             return this.D(n-1,l0,d0) + `+(25.00)` + this.D(n-1,l0,d0) + `-(25.00)`
               + this.D(n-1,l0,d0) + `-(25.00)` + this.D(n-1,l0,d0) + `+(25.00)`
               + this.D(n-1,l0,d0);
-            break;
           case 1:
             return this.D(n-1,l0,d0) + `-(25.00)` + this.D(n-1,l0,d0) + `+(25.00)`
               + this.D(n-1,l0,d0) + `+(25.00)` + this.D(n-1,l0,d0) + `-(25.00)`
               + this.D(n-1,l0,d0);
-            break;
         }
       } else {
         return `f(${l0/5},${d0})`;
@@ -170,44 +168,93 @@ window.onload = function() {
 
     console.dir(segments);
 
-    // Iterate over segments and draw them
-    segments.forEach(function(segment) {
+    var segIdx = 0
+    while (segIdx < segments.length) {
+      // check if part of segment
+      if (segments[segIdx].segment_id !== 0 && segments[segIdx+1].segment_id !== 0) {
+        var segmentsToProcess = [];
+        var j = 1;
+        while (segments[segIdx + j].segment_id !== 0) {
+          segmentsToProcess.push(segments[j]);
+          j += 1;
+        }
 
-      // A vector segment will be used for interpolating the arc drawings
-      // across the branch segment
-      var vector_segment = {
-        x: segment.target.x - segment.origin.x,
-        y: segment.target.y - segment.origin.y
-      };
+        var flattenedPositions = [];
+        flattenedPositions.push(segmentsToProcess[0].origin.x);
+        flattenedPositions.push(segmentsToProcess[0].origin.y);
 
-      // Longer segments will need more drawn circles. Different iteration count
-      // will be driven by the length of the segment. The shorter segments will
-      // instanciate less dots.
-      var iterations = Math.sqrt(
-        vector_segment.x * vector_segment.x + vector_segment.y * vector_segment.y
-      );
-      ctx.moveTo(segment.origin.x, segment.origin.y);
-      for (i = 0; i <= iterations; i++) {
+        segmentsToProcess.forEach(function (segmentToProcess) {
+          flattenedPositions.push(segmentToProcess.target.x);
+          flattenedPositions.push(segmentToProcess.target.y);
+        });
 
-        // Linearly interpolate diameters and position of dots across the segment
-        var x = segment.origin.x + (i / iterations) * vector_segment.x;
-        var y = segment.origin.y + (i / iterations) * vector_segment.y;
-        var diameter = segment.previous_diameter * (1 - (i / iterations)) +
-          segment.diameter * (i / iterations);
+        console.log("*.*.*.*.*.*.*.*.*");
 
-        // Do the actual drawing
-        ctx.beginPath();
-        ctx.arc( web_position_offset.x + x, web_position_offset.y + y, diameter, 0, 2 * Math.PI);
+        console.dir(flattenedPositions);
+        var smoothedPoints = getCurvePoints(flattenedPositions, 1.0, 100, false);
+        console.log("*.*.*.*.*.*.*.*.*");
 
-        console.log(`PSCALE ATTR: ${diameter}`);
+        ctx.moveTo(smoothedPoints[0], smoothedPoints[1]);
 
-        points_for_houdini.push([x, y, 0.0]);
-        pscale_for_houdini.push(diameter);
 
-        ctx.fill();
-        ctx.closePath();
+
+        for (i = 0; i < smoothedPoints.length / 2; i++) {
+          ctx.beginPath();
+          ctx.arc(
+            web_position_offset.x + smoothedPoints[2 * i],
+            web_position_offset.y + smoothedPoints[2 * i + 1],
+            2.0,
+            0,
+            2 * Math.PI
+          );
+          ctx.fill();
+          ctx.closePath();
+
+        points_for_houdini.push([smoothedPoints[2*i], smoothedPoints[2*i+1], 0.0]);
+        pscale_for_houdini.push(4.0);
+        }
+
+        // skip all the processed
+        segIdx += j;
+      } else {
+        // A vector segment will be used for interpolating the arc drawings
+        // across the branch segment
+        var vector_segment = {
+          x: segments[segIdx].target.x - segments[segIdx].origin.x,
+          y: segments[segIdx].target.y - segments[segIdx].origin.y
+        };
+
+        // Longer segments will need more drawn circles. Different iteration count
+        // will be driven by the length of the segment. The shorter segments will
+        // instanciate less dots.
+        var iterations = Math.sqrt(
+          vector_segment.x * vector_segment.x + vector_segment.y * vector_segment.y
+        );
+
+        ctx.moveTo(segments[segIdx].origin.x, segments[segIdx].origin.y);
+
+        for (i = 0; i <= iterations; i++) {
+
+          // Linearly interpolate diameters and position of dots across the segment
+          var x = segments[segIdx].origin.x + (i / iterations) * vector_segment.x;
+          var y = segments[segIdx].origin.y + (i / iterations) * vector_segment.y;
+          var diameter = segments[segIdx].previous_diameter * (1 - (i / iterations)) +
+            segments[segIdx].diameter * (i / iterations);
+
+          // Do the actual drawing
+          ctx.beginPath();
+          ctx.arc( web_position_offset.x + x, web_position_offset.y + y, diameter, 0, 2 * Math.PI);
+
+          points_for_houdini.push([x, y, 0.0]);
+          pscale_for_houdini.push(diameter);
+
+          ctx.fill();
+          ctx.closePath();
+        }
+        segIdx += 1;
       }
-    });
+    }
+
   }
 
   function generate_json(points_for_houdini, pscale_for_houdini) {
@@ -272,6 +319,9 @@ window.onload = function() {
     // Reset the current segment information
     segments = [];
 
+    // To group various segments and interpolate them
+    var segmentId = 0;
+
     // Get the character length of the string of commands for parsing purpose
     var n = commands.length;
 
@@ -288,6 +338,7 @@ window.onload = function() {
     var isFirstDrawn = false;
     var isSegmentPart = true;
     var isLastSegmentPart = false;
+    var segmentsDrawn = 0;
     while (i < n) {
       var currentChar = commands.charAt(i);
       console.log("----");
@@ -299,7 +350,7 @@ window.onload = function() {
         // regex. The returned value is used to walk passed the already parsed
         // characters.
         case 'f':
-          i += perform_step(commands.slice(i, n), isFirstDrawn, isSegmentPart, isLastSegmentPart);
+          i += perform_step(commands.slice(i, n), isFirstDrawn, isSegmentPart, isLastSegmentPart, segmentId);
           isFirstDrawn = true;
           break;
 
@@ -309,6 +360,8 @@ window.onload = function() {
           isFirstDrawn = false;
           isSegmentPart = true;
           isLastSegmentPart = false;
+          segmentsDrawn += 1;
+          segmentId = segmentsDrawn;
           break;
 
         // Segment is finished
@@ -316,6 +369,7 @@ window.onload = function() {
           isSegmentPart = false;
           isFirstDrawn = true;
           isLastSegmentPart = true;
+          segmentId = 0;
           console.log("Finish segment");
           break;
 
@@ -348,7 +402,7 @@ window.onload = function() {
   }
 
   // Makes turtle walk
-  function perform_step(substring, isFirstDrawn, isSegmentPart, isLastSegmentPart) {
+  function perform_step(substring, isFirstDrawn, isSegmentPart, isLastSegmentPart, segmentId) {
     var pattern = /f\((\d+\.*\d*),(\d+\.*\d*)\)/;
     var result = pattern.exec(substring);
 
@@ -361,7 +415,8 @@ window.onload = function() {
     console.log(`Parsed Diameter:      ${segment_diameter}` );
     console.log(`Is first drawn:       ${isFirstDrawn}`     );
     console.log(`Is part of segment:   ${isSegmentPart}`    );
-    console.log(`Is last segment step: ${isLastSegmentPart}`)
+    console.log(`Is last segment step: ${isLastSegmentPart}`);
+    console.log(`SegmentId:            ${segmentId}`        );
 
     // Needs to be done so that we can access parent branch diameters
     currentState.diameter = segment_diameter;
@@ -390,7 +445,8 @@ window.onload = function() {
         y: currentState.pos.y + currentState.dir.y * segment_length
       },
       diameter: segment_diameter,
-      previous_diameter: previous_diameter
+      previous_diameter: previous_diameter,
+      segment_id: segmentId
     })
 
     // Update the current position of the turtle
