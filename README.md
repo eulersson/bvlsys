@@ -1,7 +1,7 @@
 # bvlsys
 Stochastic parametrized L-Systems for blood vessels generation. Exporting feature for Houdini.
 
-**Live Demo**: https://docwhite.github.io/bvlsys/index.html
+**Live Demo**: https://docwhite.github.io/bvlsys/
 *Press spacebar to iterate, Press 's' for saving out the image.*
 
 ## WIP
