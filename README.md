@@ -15,8 +15,6 @@ Exporting feature available for Houdini.
 
 ![Houdini Export](/img/houdini.png)
 
-![Blood Vessel Network](/img/bv01.png?raw=true "Blood Vessel Network")
-
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="img/net.dark.png" />
@@ -34,7 +32,7 @@ Exporting feature available for Houdini.
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="img/thicket.dark.png" />
-    <img alt="Blood Vessel Tangled" src="img/thicket.light.png" />
+    <img alt="Blood Vessel Thicket" src="img/thicket.light.png" />
   </picture>
 </div>
 
