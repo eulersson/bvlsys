@@ -10,7 +10,9 @@ Stochastic parametrized L-Systems for blood vessels generation.
 
 Exporting feature available for Houdini.
 
-[Live Demo](https://eulersson.github.io/bvlsys)
+<p align="center">
+  <a href="https://eulersson.github.io/bvlsys">Live Demo</a>
+</p>
 *Press spacebar to iterate, Press 's' for saving out the image.*
 
 ![Houdini Export](/img/houdini.png)
@@ -24,8 +26,8 @@ Exporting feature available for Houdini.
 
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="img/tangled.dark.png" />
-    <img alt="Blood Vessel Tangled" src="img/tangled.light.png" />
+    <source media="(prefers-color-scheme: dark)" srcset="img/sun.dark.png" />
+    <img alt="Blood Vessel Sun" src="img/sun.light.png" />
   </picture>
 </div>
 
